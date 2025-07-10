@@ -1,5 +1,5 @@
 from kafka import KafkaConsumer, KafkaProducer
-import threading, json, logging
+import json
 from app.core.config import settings
 from app.db.database import SessionLocal
 from app.db.models import PLCCommand
@@ -10,6 +10,8 @@ producer = KafkaProducer(
 )
 
 def handle_kafka_messages():
+    print("Starting Kafka consumer...")
+
     consumer = KafkaConsumer(
         settings.KAFKA_CONSUME_TOPIC,
         bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS,
@@ -18,12 +20,12 @@ def handle_kafka_messages():
         value_deserializer=lambda m: json.loads(m.decode("utf-8")),
     )
 
+    print(f"Connected to topic: {settings.KAFKA_CONSUME_TOPIC}")
     db = SessionLocal()
     for message in consumer:
+        print(f"Consumed message: {message}")
         data = message.value
-        logging.info(f"Consumed: {data}")
 
-        # Store in DB
         plc_command = PLCCommand(
             bucket_id=data["bucketId"],
             material_id=data["materialId"],
@@ -32,7 +34,6 @@ def handle_kafka_messages():
         db.add(plc_command)
         db.commit()
 
-        # Publish new status message
         new_message = {
             "bucketId": data["bucketId"],
             "status": "accepted",
