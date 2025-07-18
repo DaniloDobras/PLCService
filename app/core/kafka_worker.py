@@ -1,16 +1,19 @@
 from kafka import KafkaConsumer, KafkaProducer
 import json
 from app.core.config import settings
+from opcua import Client, ua
 from app.db.database import SessionLocal
 from app.db.models import PLCCommand
+
 
 producer = KafkaProducer(
     bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS,
     value_serializer=lambda v: json.dumps(v).encode('utf-8')
 )
 
-def handle_kafka_messages():
-    print("Starting Kafka consumer...")
+
+def process_kafka():
+    print("🚀 Starting Kafka consumer...")
 
     consumer = KafkaConsumer(
         settings.KAFKA_CONSUME_TOPIC,
@@ -20,24 +23,41 @@ def handle_kafka_messages():
         value_deserializer=lambda m: json.loads(m.decode("utf-8")),
     )
 
-    print(f"Connected to topic: {settings.KAFKA_CONSUME_TOPIC}")
     db = SessionLocal()
-    for message in consumer:
-        print(f"Consumed message: {message}")
-        data = message.value
+    opc_client = Client(settings.OPCUA_ENDPOINT)
+    opc_client.connect()
+    node_id = "ns=2;s=Tag7"
+    node = opc_client.get_node(node_id)
 
-        plc_command = PLCCommand(
-            bucket_id=data["bucketId"],
-            material_id=data["materialId"],
-            qty=data["qty"]
-        )
-        db.add(plc_command)
-        db.commit()
+    try:
+        for message in consumer:
+            data = message.value
+            print(f"📥 Consumed message: {data}")
 
-        new_message = {
-            "bucketId": data["bucketId"],
-            "status": "accepted",
-            "source": "PLCService"
-        }
-        producer.send(settings.KAFKA_PRODUCE_TOPIC, new_message)
-        producer.flush()
+            plc_command = PLCCommand(
+                bucket_id=data["bucketId"],
+                material_id=data["materialId"],
+                qty=data["qty"]
+            )
+            db.add(plc_command)
+            db.commit()
+
+            new_message = {
+                "bucketId": data["bucketId"],
+                "status": "accepted",
+                "source": "PLCService"
+            }
+            node.set_value(ua.Variant(json.dumps(new_message), ua.VariantType.String))
+            producer.send(settings.KAFKA_PRODUCE_TOPIC, new_message)
+            producer.flush()
+
+    finally:
+        opc_client.disconnect()
+        db.close()
+
+
+def start_kafka_consumer():
+    """
+    Starts Kafka consumer in a blocking loop (runs inside a background thread).
+    """
+    process_kafka()

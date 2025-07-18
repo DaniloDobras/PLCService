@@ -10,5 +10,7 @@ class Settings(BaseSettings):
     KAFKA_BOOTSTRAP_SERVERS: str = os.getenv('KAFKA_BOOTSTRAP_SERVERS')
     KAFKA_CONSUME_TOPIC: str = os.getenv('KAFKA_CONSUME_TOPIC')
     KAFKA_PRODUCE_TOPIC: str = os.getenv('KAFKA_PRODUCE_TOPIC')
+    OPCUA_ENDPOINT: str = os.getenv("OPCUA_ENDPOINT")
+
 
 settings = Settings()
