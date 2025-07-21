@@ -46,7 +46,7 @@ PLCService/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-org/PLCService.git
+git clone https://github.com/DaniloDobras/PLCService.git
 cd PLCService
 ```
 
