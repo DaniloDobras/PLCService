@@ -115,7 +115,7 @@ alembic revision --autogenerate -m "added new table"
 
 ---
 
-## 📢 Kafka Topics
+## Kafka Topics
 
 * **Consumed**: `orders`
 * **Produced**: `plc-status`
@@ -147,7 +147,7 @@ Example produced message:
 * FastAPI
 * SQLAlchemy
 * Kafka (via `kafka-python`)
-* OPC UA (`asyncua` assumed)
+* OPC UA (`opcua`)
 * PostgreSQL
 * Docker
 
