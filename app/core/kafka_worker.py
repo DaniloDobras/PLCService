@@ -42,13 +42,15 @@ def process_kafka():
             db.add(plc_command)
             db.commit()
 
-            new_message = {
+            plc_result = {
                 "bucketId": data["bucketId"],
+                "materialId": data["materialId"],
+                "qty": data["qty"],
                 "status": "accepted",
                 "source": "PLCService"
             }
-            node.set_value(ua.Variant(json.dumps(new_message), ua.VariantType.String))
-            producer.send(settings.KAFKA_PRODUCE_TOPIC, new_message)
+            node.set_value(ua.Variant(json.dumps(plc_result), ua.VariantType.String))
+            producer.send(settings.KAFKA_PRODUCE_TOPIC, plc_result)
             producer.flush()
 
     finally:
