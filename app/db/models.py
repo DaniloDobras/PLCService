@@ -7,7 +7,5 @@ class PLCCommand(Base):
     __tablename__ = "plc_commands"
 
     id = Column(Integer, primary_key=True, index=True)
-    bucket_id = Column(Integer, nullable=False)
-    material_id = Column(Integer, nullable=False)
-    qty = Column(Integer, nullable=False)
+    message = Column(String, index=True, nullable=False, server_default="{}")
     status = Column(String, default="pending")

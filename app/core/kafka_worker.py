@@ -34,23 +34,39 @@ def process_kafka():
             data = message.value
             print(f"📥 Consumed message: {data}")
 
-            plc_command = PLCCommand(
-                bucket_id=data["bucketId"],
-                material_id=data["materialId"],
-                qty=data["qty"]
-            )
-            db.add(plc_command)
-            db.commit()
+            order_id = data.get("order_id")
+            buckets = data.get("buckets", [])
 
-            plc_result = {
-                "bucketId": data["bucketId"],
-                "materialId": data["materialId"],
-                "qty": data["qty"],
-                "status": "accepted",
-                "source": "PLCService"
-            }
-            node.set_value(ua.Variant(json.dumps(plc_result), ua.VariantType.String))
-            producer.send(settings.KAFKA_PRODUCE_TOPIC, plc_result)
+            for bucket in buckets:
+                bucket_id = bucket["bucket_id"]
+                material_id = bucket["material_type"]
+                qty = bucket["material_qty"]
+                position = bucket["position"]
+
+                # Save to DB
+                plc_command = PLCCommand(
+                    message=str(data)
+                )
+                db.add(plc_command)
+
+                # Prepare OPC UA message
+                plc_result = {
+                    "orderId": order_id,
+                    "bucketId": bucket_id,
+                    "materialId": material_id,
+                    "qty": qty,
+                    "position": position,
+                    "status": "accepted",
+                    "source": "PLCService"
+                }
+
+                # Write to OPC UA
+                node.set_value(ua.Variant(json.dumps(plc_result), ua.VariantType.String))
+
+                # Publish to Kafka
+                producer.send(settings.KAFKA_PRODUCE_TOPIC, plc_result)
+
+            db.commit()
             producer.flush()
 
     finally:

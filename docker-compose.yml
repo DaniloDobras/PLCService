@@ -3,6 +3,8 @@ version: "3.8"
 services:
   plc-service:
     build: .
+    volumes:
+      - .:/app
     container_name: plc-service
     ports:
       - "8001:8001"
