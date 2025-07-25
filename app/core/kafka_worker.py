@@ -53,7 +53,7 @@ def process_kafka():
                 plc_result = {
                     "orderId": order_id,
                     "bucketId": bucket_id,
-                    "materialId": material_id,
+                    "materialType": material_id,
                     "qty": qty,
                     "position": position,
                     "status": "accepted",

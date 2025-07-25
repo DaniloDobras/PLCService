@@ -90,13 +90,13 @@ docker-compose up --build
 Run database migration:
 
 ```bash
-alembic upgrade head
+docker exec -it plc-service alembic upgrade head
 ```
 
 Generate new revision:
 
 ```bash
-alembic revision --autogenerate -m "added new table"
+docker exec -it plc-service alembic revision --autogenerate -m "table added"
 ```
 
 ---
@@ -124,19 +124,49 @@ Example consumed message:
 
 ```json
 {
-  "bucketId": "B123",
-  "materialId": "M456",
-  "qty": 10
+  "order_id": 42,
+  "priority": 1,
+  "buckets": [
+    {
+      "bucket_id": 1001,
+      "material_type": "Steel",
+      "material_qty": 2,
+      "position": {
+        "position_x": 10,
+        "position_y": 5,
+        "position_z": 0
+      }
+    },
+    {
+      "bucket_id": 1002,
+      "material_type": "Aluminum",
+      "material_qty": 3,
+      "position": {
+        "position_x": 12,
+        "position_y": 7,
+        "position_z": 0
+      }
+    }
+  ]
 }
+
 ```
 
 Example produced message:
 
 ```json
 {
-  "status": "processed",
-  "bucketId": "B123",
-  "timestamp": "2025-07-21T10:45:00Z"
+  "orderId": 1,
+  "bucketId": 1,
+  "materialId": "Steel",
+  "qty": 5,
+  "position": {
+        "position_x": 12,
+        "position_y": 7,
+        "position_z": 0
+      },
+  "status": "accepted",
+  "source": "PLCService"
 }
 ```
 
